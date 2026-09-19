@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,6 +33,34 @@ jobs:
         run: python -m pytest --cov=app --cov-report=term-missing --cov-report=json:coverage.json --cov-fail-under=80 --junitxml=junit.xml
       - name: Offline demo
         run: python scripts/demo.py > demo-output.json
+      - name: Live HTTP smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DATA_DIR="$(mktemp -d)"
+          export APP_ENV=local LLM_PROVIDER=mock
+          python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python - <<'PY'
+          import time
+          import httpx
+          for attempt in range(50):
+              try:
+                  response = httpx.get("http://127.0.0.1:8000/health", timeout=1)
+                  response.raise_for_status()
+                  break
+              except httpx.HTTPError:
+                  time.sleep(0.2)
+          else:
+              raise SystemExit("HTTP server did not become healthy")
+          PY
+          python scripts/smoke_http.py > http-smoke.json
+      - name: Ruff lint gate
+        run: python -m ruff check --output-format json . > ruff.json
+      - name: Capture lint repair suggestions
+        if: always()
+        run: python -m ruff check --fix --diff . > ruff.patch || true
       - name: Snapshot tested source
         if: always()
         run: |
@@ -53,3 +81,7 @@ jobs:
             coverage.json
             junit.xml
             demo-output.json
+            http-smoke.json
+            uvicorn.log
+            ruff.json
+            ruff.patch
