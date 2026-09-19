@@ -18,3 +18,13 @@ build/
 dist/
 *.egg-info/
 .DS_Store
+# Generated local/CI verification artifacts
+coverage.json
+junit.xml
+demo-output.json
+http-smoke.json
+ruff.json
+ruff.patch
+source.tar.gz
+tested-commit.txt
+installed-dependencies.txt
