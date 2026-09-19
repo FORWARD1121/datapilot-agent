@@ -1,2 +1,4 @@
-# datapilot-agent
-AI-powered automated data analysis and decision-making agent built with Coze Workflow, Python, FastAPI, Pandas and LLMs.
+# DataPilot
+
+Implementation in progress on `feat/datapilot-core`. See `docs/architecture.md`.
+The original MIT license is preserved. No cloud deployment or benchmark is claimed.
