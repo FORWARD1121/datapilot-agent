@@ -3,7 +3,6 @@
 import csv
 from pathlib import Path
 
-
 DESTINATION = Path(__file__).resolve().parents[1] / "data" / "samples" / "sample_sales.csv"
 FIELDS = ["date", "region", "product", "category", "sales_amount", "order_count", "customer_count", "cost", "profit"]
 

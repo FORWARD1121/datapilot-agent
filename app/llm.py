@@ -14,7 +14,6 @@ from app.reports import Commentary, Evidence, InsightDraft
 from app.schemas import Intent, Plan, Scope, Step, ToolArgs
 from app.tools import ToolRegistry
 
-
 ROOT = Path(__file__).parent
 
 
@@ -37,6 +36,24 @@ def strict_json(text: str):
     def invalid_constant(value):
         raise ValueError("Nonfinite JSON constant")
 
+    # Bound nesting independently of the interpreter's recursion limit.
+    depth, quoted, escaped = 0, False, False
+    for char in text:
+        if quoted:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quoted = False
+        elif char == '"':
+            quoted = True
+        elif char in "[{":
+            depth += 1
+            if depth > 64:
+                raise ValueError("Model JSON exceeds nesting limit")
+        elif char in "]}":
+            depth -= 1
     return json.loads(text, object_pairs_hook=object_pairs, parse_constant=invalid_constant)
 
 
@@ -95,6 +112,10 @@ class MockProvider:
         translated = {"一": 1, "两": 2, "二": 2, "三": 3, "六": 6, "十二": 12}
         last_n = (translated.get(months[1]) or int(months[1])) if months else None
         top = re.search(r"(?:top|bottom|前)\s*(\d+)", lowered)
+        if last_n and not date_column:
+            raise AppError("missing_date", "Time filters require a parsed date column")
+        if analysis_type not in {"trend", "growth", "business_diagnosis", "anomaly"} and not last_n:
+            date_column = None
         scope = Scope(date_column=date_column, last_n_months=last_n)
         return Intent(analysis_type=analysis_type, metrics=metrics[:8], dimensions=dimensions[:2], scope=scope,
                       top_k=int(top[1]) if top else 5, ascending=any(x in lowered for x in ("bottom", "最低")),

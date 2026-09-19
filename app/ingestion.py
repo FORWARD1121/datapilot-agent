@@ -126,8 +126,12 @@ def normalize(frame: pd.DataFrame, drop_duplicates: bool = False) -> ParsedTable
         leading_zeros = text.str.match(r"^[+-]?0\d+$").any()
         date_hint = bool(re.search(r"date|time|日期|时间", name, re.I))
         iso_dates = text.str.match(r"^\d{4}-\d{2}-\d{2}(?:[ T].*)?$").all()
-        if date_hint or iso_dates or pd.api.types.is_datetime64_any_dtype(series):
-            converted = pd.to_datetime(series, errors="coerce", format="mixed", utc=True)
+        numeric_input = pd.api.types.is_numeric_dtype(series)
+        compact_date = date_hint and text.str.fullmatch(r"\d{8}(?:\.0+)?").all()
+        # Never interpret unlabelled Excel serials/epochs as nanoseconds since 1970.
+        if compact_date or (not numeric_input and (date_hint or iso_dates)) or pd.api.types.is_datetime64_any_dtype(series):
+            values = series.astype("string").str.replace(r"\.0+$", "", regex=True) if compact_date else series
+            converted = pd.to_datetime(values, errors="coerce", format="%Y%m%d" if compact_date else "mixed", utc=True)
             if converted.notna().sum() == len(nonempty):
                 frame[name] = converted.dt.tz_convert(None)
                 inferred[name] = "datetime"

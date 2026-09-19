@@ -12,7 +12,7 @@ from app.schemas import AnalysisRequest, Contract
 
 class CozeRequest(Contract):
     dataset_id: UUID
-    query: str = Field(min_length=1, max_length=2000)
+    query: str = Field(min_length=1, max_length=2000, pattern=r"\S")
 
 
 class CozeResponse(Contract):

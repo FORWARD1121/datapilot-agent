@@ -23,7 +23,7 @@ class Commentary(Contract):
     @field_validator("text")
     @classmethod
     def no_model_numbers(cls, value: str) -> str:
-        if re.search(r"[0-9%％]", value):
+        if re.search(r"[\d%％]", value):
             raise ValueError("Put numeric facts in evidence, not model-generated commentary")
         return value
 
@@ -66,7 +66,20 @@ def evidence_from(results: list[ToolResult]) -> list[Evidence]:
             indices = [i for i in indices if records[i]["triggered"]]
         # Bound evidence independently of the stored complete tool output.
         if len(indices) > 30:
-            indices = indices[:15] + indices[-15:]
+            if result.tool == "growth_analysis":
+                indices.sort(key=lambda i: records[i].get("growth_rate") if records[i].get("growth_rate") is not None else float("inf"))
+                indices = indices[:15] + indices[-15:]
+            elif result.tool == "anomaly_detection":
+                indices.sort(key=lambda i: abs(records[i].get("deviation") or 0), reverse=True)
+                indices = indices[:30]
+            elif result.tool == "business_rule_check":
+                priorities = {"critical": 0, "warning": 1, "info": 2}
+                indices.sort(key=lambda i: priorities.get(records[i].get("severity"), 3))
+                indices = indices[:30]
+            elif result.tool == "ranking_analysis":
+                indices = indices[:30]
+            else:
+                indices = indices[:15] + indices[-15:]
         for index in indices:
             record = records[index]
             if "metric" in record and "value" in record:

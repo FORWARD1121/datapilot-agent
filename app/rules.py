@@ -12,7 +12,6 @@ from app.core import AppError
 from app.schemas import Contract, ToolArgs
 from app.tools import groups, growth_rate, metric_value
 
-
 OPERATORS = {"<": operator.lt, "<=": operator.le, ">": operator.gt,
              ">=": operator.ge, "==": operator.eq, "!=": operator.ne}
 

@@ -1,5 +1,6 @@
 """Independent deterministic tools. No eval, SQL, generated code or network calls."""
 
+import math
 from collections.abc import Callable
 
 import pandas as pd
@@ -7,7 +8,6 @@ import pandas as pd
 from app.core import AppError, ensure_json
 from app.profiling import profile, scalar
 from app.schemas import Scope, ToolArgs, ToolResult
-
 
 TOOL_DESCRIPTIONS = {
     "dataset_summary": "Compute dataset quality and descriptive statistics.",
@@ -68,21 +68,39 @@ def select_frame(frame: pd.DataFrame, scope: Scope) -> pd.DataFrame:
 
 
 def metric_value(frame: pd.DataFrame, metric: str, aggregation: str) -> tuple[float | int | None, str | None]:
+    """Use unbounded integer sums and finite checked floating-point reductions."""
     if metric == "profit_margin":
-        inputs = frame[["profit", "sales_amount"]]
-        if inputs.isna().any().any():
+        if frame[["profit", "sales_amount"]].isna().any().any():
             return None, "incomplete_ratio_inputs"
-        denominator = inputs.sales_amount.sum()
+        denominator, reason = metric_value(frame, "sales_amount", "sum")
+        numerator, numerator_reason = metric_value(frame, "profit", "sum")
+        if denominator is None or numerator is None:
+            return None, reason or numerator_reason
         if denominator <= 0:
             return None, "nonpositive_sales_denominator"
-        return scalar(inputs.profit.sum() / denominator), None
-    series = frame[metric]
+        value = scalar(numerator / denominator)
+        return value, "numeric_overflow" if value is None else None
+    series = frame[metric].dropna()
+    count = len(series)
     if aggregation == "count":
-        return int(series.count()), None
-    if series.count() == 0:
+        return count, None
+    if not count:
         return None, "all_values_missing"
-    value = series.sum(min_count=1) if aggregation == "sum" else getattr(series, aggregation)()
-    return scalar(value), "missing_values_excluded" if series.isna().any() else None
+    try:
+        if aggregation == "sum":
+            value = (sum(int(x) for x in series) if pd.api.types.is_integer_dtype(series)
+                     else math.fsum(float(x) for x in series))
+        elif aggregation == "mean":
+            # Divide before summing so a finite mean need not overflow its total.
+            value = math.fsum(float(x) / count for x in series)
+        else:
+            value = getattr(series, aggregation)()
+        value = scalar(value)
+    except (OverflowError, ValueError):
+        return None, "numeric_overflow"
+    if value is None:
+        return None, "numeric_overflow"
+    return value, "missing_values_excluded" if frame[metric].isna().any() else None
 
 
 def groups(frame: pd.DataFrame, dimensions: list[str]):
@@ -116,7 +134,11 @@ def growth_rate(current, previous) -> tuple[float | None, str | None]:
         return None, "zero_previous_value"
     if previous < 0:
         return None, "negative_previous_value"
-    return scalar((current - previous) / previous), None
+    difference = current - previous
+    value = ((current / previous) - 1 if isinstance(difference, float) and not math.isfinite(difference)
+             else difference / previous)
+    value = scalar(value)
+    return value, "numeric_overflow" if value is None else None
 
 
 class ToolRegistry:
@@ -169,7 +191,7 @@ class ToolRegistry:
                     growth, reason = growth_rate(record["value"], previous)
                     record.update({"previous_period": previous_period, "previous_value": previous,
                                    "growth_rate": growth, "growth_reason": reason,
-                                   "delta": record["value"] - previous if record["value"] is not None and previous is not None else None})
+                                   "delta": scalar(record["value"] - previous) if record["value"] is not None and previous is not None else None})
                 output.warnings.append("Calendar-aligned growth uses only observations in the selected scope; missing periods are not zero-filled. Edge periods may be partial.")
         elif name == "anomaly_detection":
             self._anomalies(view, args, output)

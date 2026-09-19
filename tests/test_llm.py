@@ -10,7 +10,6 @@ from app.reports import Commentary, Evidence, InsightDraft
 from app.schemas import Intent
 from app.tools import ToolRegistry
 
-
 CONTEXT = {"numeric_columns": ["sales_amount", "profit"], "categorical_columns": ["region", "product"], "date_columns": ["date"]}
 
 

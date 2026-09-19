@@ -12,7 +12,6 @@ from app.rules import RuleEngine
 from app.schemas import AnalysisRequest
 from app.tools import ToolRegistry
 
-
 logger = logging.getLogger("datapilot")
 
 

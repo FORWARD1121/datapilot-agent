@@ -1,25 +1,117 @@
 {
   "openapi": "3.0.3",
-  "info": {"title": "DataPilot Coze Tool", "version": "0.1.0", "description": "Flat analysis facade. Replace the example server before importing."},
-  "servers": [{"url": "https://YOUR-DATAPILOT-DOMAIN.example"}],
+  "info": {
+    "title": "DataPilot Coze Tool",
+    "version": "0.1.0",
+    "description": "Flat analysis facade. Replace the example server before importing."
+  },
+  "servers": [
+    {
+      "url": "https://YOUR-DATAPILOT-DOMAIN.example"
+    }
+  ],
   "paths": {
     "/integrations/coze/analyze": {
       "post": {
         "operationId": "analyzeWithDataPilot",
         "summary": "Analyze an already uploaded dataset",
-        "security": [{"DataPilotKey": []}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["dataset_id", "query"], "properties": {"dataset_id": {"type": "string", "format": "uuid"}, "query": {"type": "string", "minLength": 1, "maxLength": 2000}}}}}},
+        "security": [
+          {
+            "DataPilotKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "dataset_id",
+                  "query"
+                ],
+                "properties": {
+                  "dataset_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000,
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
-          "201": {"description": "Completed analysis", "content": {"application/json": {"schema": {"type": "object", "required": ["analysis_id", "status", "summary", "report_json"], "properties": {"analysis_id": {"type": "string", "format": "uuid"}, "status": {"type": "string", "enum": ["completed"]}, "summary": {"type": "string"}, "report_json": {"type": "string", "description": "JSON-encoded full report; parse before structured presentation"}}}}}},
-          "401": {"description": "Missing or invalid X-API-Key"},
-          "404": {"description": "Dataset not found"},
-          "413": {"description": "Request too large"},
-          "422": {"description": "Invalid request or unsupported offline intent"},
-          "500": {"description": "Internal error; do not display raw diagnostics"},
-          "503": {"description": "Storage or required service unavailable"}
+          "201": {
+            "description": "Completed analysis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "analysis_id",
+                    "status",
+                    "summary",
+                    "report_json"
+                  ],
+                  "properties": {
+                    "analysis_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "completed"
+                      ]
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "report_json": {
+                      "type": "string",
+                      "description": "JSON-encoded full report; parse before structured presentation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-API-Key"
+          },
+          "404": {
+            "description": "Dataset not found"
+          },
+          "413": {
+            "description": "Request too large"
+          },
+          "422": {
+            "description": "Invalid request or unsupported offline intent"
+          },
+          "500": {
+            "description": "Internal error; do not display raw diagnostics"
+          },
+          "503": {
+            "description": "Storage or required service unavailable"
+          }
         }
       }
     }
   },
-  "components": {"securitySchemes": {"DataPilotKey": {"type": "apiKey", "in": "header", "name": "X-API-Key"}}}
+  "components": {
+    "securitySchemes": {
+      "DataPilotKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  }
 }

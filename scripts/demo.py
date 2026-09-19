@@ -9,7 +9,6 @@ from app.core import AppError, Settings
 from app.schemas import AnalysisRequest
 from app.service import DataPilot
 
-
 SAMPLE = Path(__file__).resolve().parents[1] / "data" / "samples" / "sample_sales.csv"
 QUERIES = ["分析最近三个月销售额变化情况，并找出下降最明显的区域",
            "top 3 products by sales", "sales anomaly by region",
@@ -34,7 +33,8 @@ def main() -> int:
     args = parser.parse_args()
     with TemporaryDirectory(prefix="datapilot-demo-") as temporary:
         directory = args.data_dir or Path(temporary)
-        settings = Settings(data_dir=directory) if args.live else Settings(_env_file=None, data_dir=directory, llm_provider="mock")
+        settings = Settings(data_dir=directory) if args.live else Settings(_env_file=None, data_dir=directory, database_url=None,
+            llm_provider="mock", llm_api_key="", app_env="local", api_token="", rules_path=None)
         if args.live and settings.llm_provider != "openai_compatible":
             parser.error("--live requires LLM_PROVIDER=openai_compatible and your API configuration")
         try:

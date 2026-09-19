@@ -44,7 +44,7 @@ class RequestGuard:
             return await self.app(scope, receive, wrapped_send)
         limit = self.settings.max_upload_bytes + 65536 if path == "/datasets/upload" else 65536
         declared = headers.get("content-length")
-        if declared is not None and (not declared.isascii() or not declared.isdecimal()):
+        if declared is not None and (len(declared) > 20 or not declared.isascii() or not declared.isdecimal()):
             return await reject("invalid_content_length", "Invalid Content-Length", 400)
         if declared is not None and int(declared) > limit:
             return await reject("body_too_large", "Request body limit exceeded", 413)

@@ -13,8 +13,8 @@ from sqlalchemy import text
 from starlette.exceptions import HTTPException
 
 from app import __version__
-from app.coze import create_coze_router
 from app.core import AppError, Settings
+from app.coze import create_coze_router
 from app.llm import Provider
 from app.middleware import RequestGuard, authorized
 from app.reports import Report
