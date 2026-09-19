@@ -22,7 +22,7 @@ def uploaded(client):
 def test_health_and_openapi(client):
     assert client.get("/health").json()["status"] == "ok"
     schema = client.get("/openapi.json").json()
-    assert len(schema["paths"]) == 6
+    assert len(schema["paths"]) == 7
     assert "APIKeyHeader" in schema["components"]["securitySchemes"]
 
 

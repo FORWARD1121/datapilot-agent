@@ -38,7 +38,7 @@ class RequestGuard:
             response = JSONResponse({"error": {"code": code, "message": message, "request_id": request_id}}, status_code=status)
             await response(scope, receive, wrapped_send)
 
-        if path.startswith(("/datasets", "/analysis")) and not authorized(self.settings, headers.get("X-API-Key")):
+        if path.startswith(("/datasets", "/analysis", "/integrations")) and not authorized(self.settings, headers.get("X-API-Key")):
             return await reject("unauthorized", "A valid X-API-Key is required", 401)
         if scope["method"] not in {"POST", "PUT", "PATCH"}:
             return await self.app(scope, receive, wrapped_send)

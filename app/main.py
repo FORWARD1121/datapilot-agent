@@ -13,6 +13,7 @@ from sqlalchemy import text
 from starlette.exceptions import HTTPException
 
 from app import __version__
+from app.coze import create_coze_router
 from app.core import AppError, Settings
 from app.llm import Provider
 from app.middleware import RequestGuard, authorized
@@ -141,4 +142,5 @@ def create_app(settings: Settings | None = None, provider: Provider | None = Non
         return task["report"]
 
     app.include_router(router)
+    app.include_router(create_coze_router(require_key))
     return app

@@ -1,0 +1,17 @@
+{
+  "artifact_type": "implementation_blueprint_not_a_coze_export",
+  "version": 1,
+  "inputs": {"dataset_id": "string UUID", "query": "string, nonempty, maximum 2000 characters"},
+  "secrets": ["DATAPILOT_API_TOKEN"],
+  "nodes": [
+    {"id": "start", "kind": "Start", "outputs": ["dataset_id", "query"]},
+    {"id": "validate", "kind": "Condition", "checks": ["dataset_id supplied", "query nonempty", "query length <= 2000"], "success": "profile", "failure": "error_end"},
+    {"id": "profile", "kind": "HTTP", "method": "GET", "path": "/datasets/{dataset_id}/profile", "authentication": "X-API-Key from secret", "success": "check_profile", "failure": "error_end"},
+    {"id": "check_profile", "kind": "Condition", "checks": ["HTTP status is 200", "body.profile.rows > 0"], "success": "analyze", "failure": "error_end"},
+    {"id": "analyze", "kind": "HTTP or imported plugin", "method": "POST", "path": "/integrations/coze/analyze", "json_fields": ["dataset_id", "query"], "retry_count": 0, "timeout_seconds": 300, "success": "check_analysis", "failure": "error_end"},
+    {"id": "check_analysis", "kind": "Condition", "checks": ["HTTP status is 201", "body.status is completed"], "success": "parse_report", "failure": "error_end"},
+    {"id": "parse_report", "kind": "JSON deserialization", "input": "analyze.body.report_json", "success": "success_end", "failure": "error_end"},
+    {"id": "success_end", "kind": "End", "outputs": ["analysis_id", "summary", "report_json"], "optional_formatter_prompt": "formatter_prompt.txt"},
+    {"id": "error_end", "kind": "End", "outputs": ["safe error message", "error.code if present", "error.request_id if present", "error.analysis_id if present"]}
+  ]
+}
