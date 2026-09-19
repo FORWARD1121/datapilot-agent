@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "rule_id": "LOW_MARGIN",
+      "metric": "profit_margin",
+      "operator": "<",
+      "threshold": 0.1,
+      "severity": "warning",
+      "message": "The aggregate profit margin is below the configured threshold."
+    },
+    {
+      "rule_id": "SALES_DROP",
+      "metric": "sales_amount_growth",
+      "operator": "<",
+      "threshold": -0.1,
+      "severity": "warning",
+      "message": "Sales declined beyond the configured month-over-month threshold."
+    },
+    {
+      "rule_id": "GROWTH_PROFIT_DIVERGENCE",
+      "metric": "sales_amount_growth",
+      "operator": ">",
+      "threshold": 0,
+      "severity": "critical",
+      "message": "Sales increased while profit decreased in the latest observed month.",
+      "all_of": [{"metric": "profit_growth", "operator": "<", "threshold": 0}]
+    }
+  ]
+}
