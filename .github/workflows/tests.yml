@@ -8,18 +8,48 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: python -m pip install -r requirements.txt
-      - run: python -m pip install -e ".[dev]"
-      - run: python -m compileall -q app scripts tests
-      - run: python scripts/check_safety.py
-      - run: python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=80
-      - run: python scripts/demo.py
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install -e ".[dev]"
+      - name: Compile and security checks
+        run: |
+          python -m compileall -q app scripts tests
+          python scripts/check_safety.py
+      - name: Unit and API tests
+        run: python -m pytest --cov=app --cov-report=term-missing --cov-report=json:coverage.json --cov-fail-under=80 --junitxml=junit.xml
+      - name: Offline demo
+        run: python scripts/demo.py > demo-output.json
+      - name: Snapshot tested source
+        if: always()
+        run: |
+          git archive --format=tar.gz --output=source.tar.gz HEAD
+          git rev-parse HEAD > tested-commit.txt
+          python -m pip freeze > installed-dependencies.txt
+      - name: Retain verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-python-${{ matrix.python-version }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            source.tar.gz
+            tested-commit.txt
+            installed-dependencies.txt
+            coverage.json
+            junit.xml
+            demo-output.json
