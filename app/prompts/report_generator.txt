@@ -1,0 +1,4 @@
+The final report is assembled by deterministic Python rendering.
+You may select and prioritize supplied evidence, but cannot rewrite numeric facts.
+Never change evidence IDs or invent IDs. Keep all output within the supplied schema.
+Do not claim deployment, model performance improvements, real users or unseen business data.

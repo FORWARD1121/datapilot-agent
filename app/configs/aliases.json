@@ -1,0 +1,25 @@
+{
+  "metrics": {
+    "sales_amount": ["sales_amount", "revenue", "sales", "销售额", "销售"],
+    "profit_margin": ["profit_margin", "margin", "利润率"],
+    "profit": ["profit", "利润"],
+    "cost": ["cost", "成本"],
+    "order_count": ["orders", "order_count", "订单"],
+    "customer_count": ["customer_count", "customers", "客户"]
+  },
+  "dimensions": {
+    "region": ["region", "地区", "区域"],
+    "product": ["product", "产品"],
+    "category": ["category", "类别", "品类"]
+  },
+  "analysis": {
+    "business_diagnosis": ["diagnos", "business", "经营", "建议", "重点关注", "但是", "while profit"],
+    "correlation": ["correlation", "相关"],
+    "anomaly": ["anomaly", "outlier", "异常"],
+    "ranking": ["ranking", "rank", "top", "bottom", "排名", "排行"],
+    "comparison": ["compare", "comparison", "比较", "对比"],
+    "growth": ["growth", "同比", "环比", "增长率"],
+    "trend": ["trend", "变化", "趋势", "最近", "last"],
+    "summary": ["summary", "summarize", "概览", "汇总", "总结"]
+  }
+}
